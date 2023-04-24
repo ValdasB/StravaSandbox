@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Strava Activities Map with Toggle Visibility</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/polyline-encoded@0.0.9/Polyline.encoded.min.js"></script>
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #app {
+    display: flex;
+    height: 100%;
+  }
+  
+  #activities-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #f8f9fa;
+    padding: 5px;
+    overflow-y: auto;
+  }
+  #map {
+    flex-grow: 1;
+    height: 100%;
+  }
+
+  .highlighted {
+    background-color: #ffc107;
+  }
+</style>
+</head>
+<body>
+  <div id="app">
+    <div id="activities-list">
+      <a>Strava Activities</a>
+      <input type="text" id="activity-filter" placeholder="Filter activities...">
+      <span>
+        <input type="checkbox" id="toggle-all" checked> 
+        <label for="toggle-all">Toggle all visible activities</label>
+      </span>
+      <ul id="activities" style="padding: 0px;"></ul>
+    </div>
+    <div id="map"></div>
+  </div>
+  <script>
+    const accessToken = 'YOUR_ACCESS_TOKEN';
+    const map = L.map('map').setView([0, 0], 2);
+    const activitiesList = document.getElementById('activities');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    fetchActivities();
+
+    async function fetchActivities() {
+      let page = 1;
+      const perPage = 50;
+
+      while (true) {
+        const response = await fetch(`http://localhost:8080/api/v3/athlete/activities?access_token=${accessToken}&per_page=${perPage}&page=${page}`);
+        const activities = await response.json();
+
+        if (activities.length === 0) {
+          break;
+        }
+
+        for (const activity of activities) {
+          if (activity.map && activity.map.summary_polyline) {
+            const polyline = L.Polyline.fromEncoded(activity.map.summary_polyline, {
+              color: 'red',
+              weight: 4,
+              opacity: 0.7,
+              lineJoin: 'round'
+            }).on('click', () => onPolylineClick(activity.id));
+            addActivityToList(activity, polyline);
+          }
+        }
+
+        page++;
+      }
+    }
+    const activities = [];
+
+    function addActivityToList(activity, polyline) {
+      activities[activity.id] = {activity:activity,polyline:polyline};
+      const listItem = document.createElement('div');
+      const checkBox = document.createElement('input');
+      listItem.id = `checkbox-${activity.id}`;
+
+      checkBox.type = 'checkbox';      
+      checkBox.checked = true;
+      checkBox.onchange = function () {
+        if (checkBox.checked) {
+          polyline.addTo(map);
+        } else {
+          polyline.remove();
+        }
+      };
+      polyline.addTo(map);
+      listItem.appendChild(checkBox);
+
+      const label = document.createElement('span');
+      label.innerText = `${activity.name} (${activity.type},c=${activity.commute?1:0},v=${activity.visibility})`;
+      label.setAttribute('onclick',`onPolylineClick(${activity.id})`);
+      listItem.appendChild(label);
+      const activityLink = document.createElement('a');
+      activityLink.innerText = '(link)';
+      activityLink.setAttribute('href', `https://www.strava.com/activities/${activity.id}`);
+      listItem.appendChild(activityLink);
+
+      activitiesList.appendChild(listItem);
+    }
+    const activityFilter = document.getElementById('activity-filter');
+    activityFilter.addEventListener('input', filterActivities);
+    
+    function filterActivities() {
+      const filterText = activityFilter.value.toLowerCase();
+      const activityItems = activitiesList.getElementsByTagName('div');
+      for (let i = 0; i < activityItems.length; i++) {
+        const activityLabel = activityItems[i].getElementsByTagName('span')[0];
+        const activityName = activityLabel.textContent || activityLabel.innerText;
+        if (activityName.toLowerCase().indexOf(filterText) > -1) {
+          activityItems[i].style.display = '';
+        } else {
+          activityItems[i].style.display = 'none';
+        }
+      }
+    }
+    const toggleAllCheckbox = document.getElementById('toggle-all');
+    toggleAllCheckbox.addEventListener('change', toggleAllActivities);
+    
+    function toggleAllActivities() {
+      const activityItems = activitiesList.getElementsByTagName('div');
+      for (let i = 0; i < activityItems.length; i++) {
+        if (activityItems[i].style.display !== 'none') {
+          const checkBox = activityItems[i].getElementsByTagName('input')[0];
+          checkBox.checked = toggleAllCheckbox.checked;
+          checkBox.onchange();
+        }
+      }
+    }
+    //var lastHighlighted = 0;
+    //function toggleActivityVisibility(activityId, isChecked) {
+    //  var a = activities[activityId];
+    //  const polylineColor = isChecked ? 'red' : 'blue';
+    //  a.polyline.setStyle({ color: polylineColor });
+    //  if(lastHighlighted != 0){
+    //    const listItem = document.getElementById(`checkbox-${lastHighlighted}`);
+    //    if (listItem) {
+    //      listItem.classList.remove('highlighted');
+    //    }
+    //  }
+    //  const listItem = document.getElementById(`checkbox-${activityId}`);
+    //  if (listItem) {
+    //    listItem.classList.add('highlighted');
+    //  }
+    //  lastHighlighted = activityId;
+    //}
+    function toggleActivityVisibility(activityId, isChecked) {
+      const polyline = activities[activityId].polyline;
+      //if (isChecked) {
+      //  polyline.addTo(map);
+      //} else {
+      //  polyline.remove();
+      //}
+    
+      const listItem = document.getElementById(`checkbox-${activityId}`);
+      if (listItem) {
+        listItem.classList.toggle('highlighted', isChecked);
+      }
+    
+      const polylineColor = isChecked ? 'blue' : 'red';
+      polyline.setStyle({ color: polylineColor });
+    
+      if (isChecked) listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function onPolylineClick(activityId) {
+      const checkBox = document.getElementById(`checkbox-${activityId}`).getElementsByTagName('input')
+      checkBox.checked = !checkBox.checked;
+      toggleActivityVisibility(activityId, checkBox.checked);
+    }
+  </script>
+</body>
+</html>
