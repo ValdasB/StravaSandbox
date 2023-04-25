@@ -1,1 +1,1 @@
-"# StravaSandbox" 
+# StravaSandbox
