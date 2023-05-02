@@ -51,13 +51,13 @@
   </div>
   <script>
     const accessToken = localStorage['strava_accessToken'];
-    const map = L.map('map').setView([0, 0], 2);
+    const map = L.map('map').setView([0,0],2);
     const activitiesList = document.getElementById('activities');
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. <a href="#" id="save-view" onclick="saveCurrentView(); return false;">save current view</a>'
     }).addTo(map);
-
+    initializeMap();
     fetchActivities();
 
     async function fetchActivities() {
@@ -147,30 +147,9 @@
         }
       }
     }
-    //var lastHighlighted = 0;
-    //function toggleActivityVisibility(activityId, isChecked) {
-    //  var a = activities[activityId];
-    //  const polylineColor = isChecked ? 'red' : 'blue';
-    //  a.polyline.setStyle({ color: polylineColor });
-    //  if(lastHighlighted != 0){
-    //    const listItem = document.getElementById(`checkbox-${lastHighlighted}`);
-    //    if (listItem) {
-    //      listItem.classList.remove('highlighted');
-    //    }
-    //  }
-    //  const listItem = document.getElementById(`checkbox-${activityId}`);
-    //  if (listItem) {
-    //    listItem.classList.add('highlighted');
-    //  }
-    //  lastHighlighted = activityId;
-    //}
+
     function toggleActivityVisibility(activityId, isChecked) {
       const polyline = activities[activityId].polyline;
-      //if (isChecked) {
-      //  polyline.addTo(map);
-      //} else {
-      //  polyline.remove();
-      //}
     
       const listItem = document.getElementById(`checkbox-${activityId}`);
       if (listItem) {
@@ -186,6 +165,31 @@
       const checkBox = document.getElementById(`checkbox-${activityId}`).getElementsByTagName('input')
       checkBox.checked = !checkBox.checked;
       toggleActivityVisibility(activityId, checkBox.checked);
+    }
+
+    function saveCurrentView() {
+      const mapView = {
+        center: map.getCenter(),
+        zoom: map.getZoom()
+      };
+      localStorage.setItem('map-view', JSON.stringify(mapView));
+    }
+
+    function initializeMap() {
+      const initialMapView = localStorage.getItem('map-view');
+      let initialCenter;
+      let initialZoom;
+
+      if (initialMapView) {
+        const mapView = JSON.parse(initialMapView);
+        initialCenter = mapView.center;
+        initialZoom = mapView.zoom;
+      } else {
+        initialCenter = [55.23842016113108,23.82392085676572];
+        initialZoom = 8;
+      }
+
+      map.setView(initialCenter, initialZoom);
     }
   </script>
 </body>
