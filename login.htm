@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strava API Login</title>
+    <script src="login.js" defer></script>
+</head>
+<body>
+    <h1>Strava API Login</h1>
+    <form id="loginForm">    
+        <label for="redirectUri">Redirect uri:</label>
+        <input type="text" id="redirectUri" required><br><br>
+        <label for="clientID">Client ID:</label>
+        <input type="text" id="clientID" required><br><br>
+        <label for="clientSecret">Client Secret:</label>
+        <input type="text" id="clientSecret" required><br><br>
+        <label for="expiresAt">Expires At:</label>
+        <input type="text" id="expiresAt" readonly>
+        <span id="humanReadableExpiresAt"></span><br><br>
+        <label for="refreshToken">Refresh Token:</label>
+        <input type="text" id="refreshToken" readonly><br><br>
+        <button type="submit">Connect with Strava</button>
+        <button id="refreshTokenBtn">Refresh Token</button>
+        <div id="tokenStatus"></div>
+    </form>
+</body>
+</html>
