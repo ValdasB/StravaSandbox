@@ -64,7 +64,7 @@
       let page = 1;
       const perPage = 50;
 
-      while (page<11) {
+      while (page<1100) {
         const response = await fetch(`https://www.strava.com/api/v3/athlete/activities?access_token=${accessToken}&per_page=${perPage}&page=${page}`);
         const activities = await response.json();
 
