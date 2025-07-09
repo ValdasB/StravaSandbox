@@ -46,6 +46,7 @@
         <label for="toggle-all">Toggle all visible activities</label>
       </span>
       <ul id="activities" style="padding: 0px;"></ul>
+      <button id="load-more">Load More</button>
     </div>
     <div id="map"></div>
   </div>
@@ -53,39 +54,44 @@
     const accessToken = localStorage['access_token'];
     const map = L.map('map').setView([0,0],2);
     const activitiesList = document.getElementById('activities');
+    const loadMoreBtn = document.getElementById('load-more');
+
+    let currentPage = 1;
+    const perPage = 200; // maximum allowed to reduce API calls
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. <a href="#" id="save-view" onclick="saveCurrentView(); return false;">save current view</a>'
     }).addTo(map);
     initializeMap();
-    fetchActivities();
+    loadMoreBtn.addEventListener('click', loadMoreActivities);
+    loadMoreActivities();
 
-    async function fetchActivities() {
-      let page = 1;
-      const perPage = 50;
+    async function loadMoreActivities() {
+      const response = await fetch(`https://www.strava.com/api/v3/athlete/activities?access_token=${accessToken}&per_page=${perPage}&page=${currentPage}`);
+      const activities = await response.json();
 
-      while (page<1100) {
-        const response = await fetch(`https://www.strava.com/api/v3/athlete/activities?access_token=${accessToken}&per_page=${perPage}&page=${page}`);
-        const activities = await response.json();
-
-        if (activities.length === 0) {
-          break;
-        }
-
-        for (const activity of activities) {
-          if (activity.map && activity.map.summary_polyline) {
-            const polyline = L.Polyline.fromEncoded(activity.map.summary_polyline, {
-              color: 'red',
-              weight: 4,
-              opacity: 0.7,
-              lineJoin: 'round'
-            }).on('click', () => onPolylineClick(activity.id));
-            addActivityToList(activity, polyline);
-          }
-        }
-
-        page++;
+      if (activities.length === 0) {
+        loadMoreBtn.disabled = true;
+        return;
       }
+
+      for (const activity of activities) {
+        if (activity.map && activity.map.summary_polyline) {
+          const polyline = L.Polyline.fromEncoded(activity.map.summary_polyline, {
+            color: 'red',
+            weight: 4,
+            opacity: 0.7,
+            lineJoin: 'round'
+          }).on('click', () => onPolylineClick(activity.id));
+          addActivityToList(activity, polyline);
+        }
+      }
+
+      if (activities.length < perPage) {
+        loadMoreBtn.disabled = true;
+      }
+
+      currentPage++;
     }
     const activities = [];
 
