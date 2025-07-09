@@ -15,8 +15,23 @@ body {
   flex-direction: column;
   align-items: flex-start;
   background-color: #f8f9fa;
-  padding: 5px;
+  padding: 10px;
   overflow-y: auto;
+  width: 280px;
+  border-right: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+#activities-list h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.2em;
+}
+
+#activity-filter {
+  width: 100%;
+  padding: 4px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
 }
 
 #map {
@@ -30,4 +45,35 @@ body {
 
 #activities {
   padding: 0;
+}
+
+#activities div {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #e1e1e1;
+  width: 100%;
+}
+
+#activities div:last-child {
+  border-bottom: none;
+}
+
+#activities div input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+#activities div a {
+  margin-left: 6px;
+  text-decoration: none;
+  color: #007bff;
+}
+
+#activities div a:hover {
+  text-decoration: underline;
+}
+
+#load-more {
+  margin-top: 10px;
+  width: 100%;
 }
