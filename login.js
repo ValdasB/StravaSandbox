@@ -71,9 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         populateTokenFields();
     }
-    async function refreshToken(clientID, clientSecret, refreshToken) {
+    async function refreshAccessToken(clientID, clientSecret, refreshTokenValue) {
         try {
-            const response = await fetch(`https://www.strava.com/oauth/token?client_id=${clientID}&client_secret=${clientSecret}&grant_type=refresh_token&refresh_token=${refreshToken}`, {
+            const response = await fetch(`https://www.strava.com/oauth/token?client_id=${clientID}&client_secret=${clientSecret}&grant_type=refresh_token&refresh_token=${refreshTokenValue}`, {
                 method: 'POST',
             });
         
@@ -94,13 +94,15 @@ document.addEventListener('DOMContentLoaded', () => {
             tokenStatus.textContent = 'Failed to refresh token. Please check your credentials and try again.';
         }
     }
+
+
     document.getElementById('refreshTokenBtn').addEventListener('click', async () => {
         const clientID = localStorage.getItem('clientID');
         const clientSecret = localStorage.getItem('clientSecret');
-        const refreshTokenS = localStorage.getItem('refresh_token');
+        const storedRefreshToken = localStorage.getItem('refresh_token');
 
-        if (clientID && clientSecret && refreshToken) {
-            await refreshToken(clientID, clientSecret, refreshTokenS);
+        if (clientID && clientSecret && storedRefreshToken) {
+            await refreshAccessToken(clientID, clientSecret, storedRefreshToken);
         } else {
             tokenStatus.textContent = 'Please provide valid credentials and obtain a refresh token.';
         }
